@@ -1,0 +1,676 @@
+---
+title: "INTRO TO R FOR DATA SCIENCE ASSIGNMENT2"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+## SHIVAANI KATRAGADDA
+## R00183214
+
+In this assignment, I was given an Assignment2.csv file which contains 43,824 entries, 13 total columns
+
+The thirteen columns in the Assignment2.csv file are named as follows NO, year, month, day, hour, pm2.5, DEWP, TEMP, PRES, cbwd, Iws, Is and Ir
+
+A description of the column headings is as follows: 
+No: row number 
+year: year of data in this row 
+month: month of data in this row 
+day: day of data in this row 
+hour: an hour of data in this row 
+pm2.5: PM2.5 concentration (ug/m^3) 
+DEWP: Dew Point (â„ƒ) 
+TEMP: Temperature (â„ƒ)
+PRES: Pressure (hPa) 
+cbwd: Combined wind direction 
+Iws: Cumulated wind speed (m/s) 
+Is: Cumulated hours of snow 
+Ir: Cumulated hours of rain 
+ 
+Among all the thirteen columns the column "No" does not have any importance as it just says the number of each entry i.e row number.
+
+
+```{r}
+# install.packages("readr")
+# install.packages("DataExplorer")
+# install.packages("mice")
+# install.packages("shiny")
+# install.packages("car")
+# install.packages("psych")
+# install.packages("e1071")
+# install.packages("corrplot")
+library(readr)
+library(DataExplorer)
+library(mice)
+library(shiny)
+library(car)
+library(psych)
+library(e1071)
+library(corrplot)
+
+```
+Initially, I loaded both the file by using the read.csv() function which is available in the readr package. contains 43,824 entries, 13 total columns, and it is assigned to Assignment_2. Then generated the data frame for Assignment_2 using as.data.frame() function and that data frame is named as Assignment_2.
+
+I used some functions from the data explore package which will give some idea of a given dataset.
+Firstly I used the introduce() function will give the outline of the data it tells about the number of rows, columns, missing values, discrete columns, continuous columns, all missing columns, complete rows, total observations, and memory usage.
+
+The plot_missing() function shows the percentage of missing values of each column present in the dataset.
+
+The missing plot shows the pm2.5 column have missing values so First fill the missing values using imputation technique
+
+After that, I replaced the missing values by using the impute technique by using the mice package.
+
+1.For calculating what percentage of data is missing for each column. I created a function and storing that function in variable p, the function contains the sum of missing values divided by the length of missing value and multiplied by 100 to get the percentage
+
+2. Using apply function we are calling p,i.e function which will give the percentage of missing value
+
+3.md.pattern(md stands for missing data) gives the table as well as a plot for the missing data.
+
+4. There is one more method for missing data patterns for finding missing data is md.pairs.
+
+5. Now we have to start doing Imputation, firstly storing imputed data in the variable impute and the function used in mice, within the data I am taking from 2 to 13 because a first column is just a row number and it does not have any significance or predictive power so I am going to ignore the first column for that I am using square braces and comma which means all the rows but only 2 to 13 columns and specifying how many imputations I want so m=3 and used random seed 123(seed is used here whenever you re-run program the imputed data will not change)
+
+6. Printing impute variable it specifies the number of imputations and imputation methods used for filling the missing values, for pm2.5 column the "PMM" predictive mean matching method is used.
+
+7.The impute$imp$pm2.5  lists all the rows where the pm2.5 values are missing and gives estimates for first, second and third imputations
+
+8.we can get complete dataset by using the complete() function in that we can specify which imputation we want to complete the dataset
+
+All the missing data is imputed or not  check again whether any missing data is present in the dataset by using plot_missing()
+
+plot_histogram() is provided by DataExplorer package which will provide histograms of all columns which are containing the  continuous  data
+
+plot_bar() is provided by DataExplorer package which will provide bar chart for discrete data
+
+ I am converted the cbwd which is a factor to numeric for convenience as all the other columns data is numeric. After that, I plot histogram all the columns including cbwd column histograms appears
+
+```{r}
+#Reading the  Assignmenta.csv file by using read.csv() function and it is named as Assignment_2
+
+Assignment_2 <- read.csv("F:/R2 Assignment/Assignment 2.csv")
+
+
+#Generating the dataframe for Assignment_2 using as.data.frame() function and that dataframe is named as Assignment_2 
+
+Assignment_2<- as.data.frame(Assignment_2)
+introduce(Assignment_2)
+plot_intro(Assignment_2)
+plot_missing(Assignment_2)
+plot(Assignment_2$pm2.5)#plot a graph for pm2.5 column of Assignment_2 dataframe
+boxplot(Assignment_2$pm2.5)#boxplot for pm2.5 column of Assignment_2 
+
+p<-function(x){sum(is.na(x))/length(x)*100}
+apply(Assignment_2,2,p)
+md.pattern(Assignment_2)
+impute<-mice(Assignment_2[,2:13],m=3,seed=214)
+print(impute)
+Assignment_2<-complete(impute,1)
+plot_missing(Assignment_2)
+plot_histogram(Assignment_2)
+plot_bar(Assignment_2$cbwd)
+sort(table(Assignment_2$cbwd))
+class(Assignment_2$cbwd)
+Assignment_2$cbwd<-as.numeric(Assignment_2$cbwd)
+plot_histogram(Assignment_2)
+
+
+```
+
+### QUESTION(1)
+1) You must apply a linear regression model with TEMP as your y variable and an appropriate combination of other x variables from the dataset.  You should justify your choice in terms of the number of variables. 
+
+Created various linear regression models by taking TEMP as y variable and approximate combination of other x variables.I did simple linear regression model for TEMP~year,TEMP~month,TEMP~day,TEMP~hour,TEMP~pm2.5,TEMP~PRES,TEMP~DEWP and TEMP~cbwd the columns Iws,Ir,Is does not have that much significance and build multiple linear regression with different variables taking as x variable
+```{r,echo=FALSE}
+#creating model for TEMP and year
+model1 <- lm(TEMP~year,data = Assignment_2)
+summary(model1)#summary of model1
+#plotting the graph between year and Temperature 
+plot(Assignment_2$year,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of Year and Temperature", xlab = "Year", ylab = "Temperature")
+abline(model1,col='red')#drawing the abline for plot using model1
+
+model2 <- lm(TEMP~month,data = Assignment_2)
+summary(model2)#summary of model2
+#plotting graph for month and temperaure
+plot(Assignment_2$month,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of month and Temperature", xlab = "month", ylab = "Temperature")
+abline(model2)#drawing the abline for plot using model1
+
+#Creating the model for TEMP~day
+model3 <- lm(TEMP~day,data = Assignment_2)
+summary(model3)
+#plot for day and temp
+plot(Assignment_2$day,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of day and Temperature", xlab = "day", ylab = "Temperature")
+abline(model3)#drawing abline 
+
+model4<- lm(TEMP~hour,data = Assignment_2)
+summary(model4)#summary of model
+#plot for hour and TEMP
+plot(Assignment_2$hour,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of hour and Temperature", xlab = "hour", ylab = "Temperature")
+abline(model4)#abline of model
+
+model5 <- lm(TEMP~pm2.5,data = Assignment_2)
+summary(model5)#summary of model 
+#plot of pm2.5 and TEMP
+plot(Assignment_2$pm2.5,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of dpm2.5 and Temperature", xlab = "pm2.5", ylab = "Temperature")
+abline(model5)#abline of model 
+
+#creating the model for TEMP~DEWP
+model6 <- lm(TEMP~DEWP,data = Assignment_2)
+summary(model6)#summary of model
+#plot of DEWP and temp
+plot(Assignment_2$DEWP,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of DEWP and Temperature", xlab = "DEWP", ylab = "Temperature")
+abline(model6)#abline of model
+
+#creating model TEMP~PRES
+model7 <- lm(TEMP~PRES,data = Assignment_2)
+summary(model7)#summary of model
+#plot of PRES and temp
+plot(Assignment_2$PRES,Assignment_2$TEMP,pch = 16, cex = 1.2, col = "blue", main = "Graph of PRES and Temperature", xlab = "PRES", ylab = "Temperature")
+abline(model7)#abline of model
+
+#creating model with year+month+hour+day+pm2.5
+model8<-lm(TEMP~year+month+hour+day+pm2.5,data=Assignment_2)
+summary(model8)#summary of model
+
+#creating the model with combination year+month+hour+day+DEWP
+model9<-lm(TEMP~year+month+hour+day+DEWP,data=Assignment_2)
+summary(model9)#summary of model
+
+#creating the model with combination year+month+hour+day+PRES
+model10<-lm(TEMP~year+month+hour+day+PRES,data=Assignment_2)
+summary(model10)#confint of model
+
+#creating the model with combination year+month+hour+day+cbwd
+model11<-lm(TEMP~year+month+hour+day+cbwd,data=Assignment_2)
+summary(model11)#summary of model
+
+
+#creating the model with combination year+month+hour+day+pm2.5+DEWP
+model12<-lm(TEMP~year+month+hour+day+pm2.5+DEWP,data=Assignment_2)
+summary(model2)#summary of model
+
+#creating the model with combination year+month+hour+day+pm2.5+PRES
+model13<-lm(TEMP~year+month+hour+day+pm2.5+PRES,data=Assignment_2)
+summary(model13)#summary of model13
+
+#creating the model with combination year+month+hour+day+pm2.5+cbwd
+model14<-lm(TEMP~year+month+hour+day+pm2.5+cbwd,data=Assignment_2)
+summary(model4)#summary of model
+
+
+#performing AIC test to know the best model,lower the AIC value is the best model
+AIC(model1)
+AIC(model2)
+AIC(model3)
+AIC(model4)
+AIC(model5)
+AIC(model6)
+AIC(model7)
+AIC(model8)
+AIC(model9)
+AIC(model10)
+AIC(model11)
+AIC(model12)
+AIC(model13)
+AIC(model14)
+```
+
+
+### Question(2)
+2.You should build a Shiny app or dashboard allowing a scatterplot for any combination of variables to be displayed.  Additionally, you should be able to generate histograms, boxplots etc. of your data in this app. 
+
+shiny is a package used to easily build interactive web apps straight from R
+To generate shiny we should follow three steps. They are as follows
+1.Ui
+2.server
+3.shinyApp(UI, server)
+
+Ui
+Initially, we should create UI  function i.e user interface, Generally user interface consists of title panel, sidebar layout, sidebar panel, main panel
+For this app, I gave the title as Data Visualisation. In the sidebar panel, I defined radio buttons for a scatterplot, histogram of x, histogram of y, boxplot
+and dropdown list menu for the x and y variables
+In the main panel, I defined tabsetpanel as plot all the plots output will appear in this tab
+
+server
+in server function, I created output$plotxy all the plot will store in that variable 
+if the input$type is equal to "scat" the scatterplot will be executed or plotted on plot tab
+if the input$type is equal to "Histogram of x" the Histogram for x variable will be generated on plot tab
+if the input$type is equal to "Histogram of y" the Histogram for y variable will be generated on plot tab
+if the input$type is equal to "box" the boxplot will be generated on the plot tab 
+
+shinyAPP(UI, server)
+we will call the ui and server functions by using shinyAPP() function and generate the App
+
+
+```{r,echo=FALSE}
+
+# Defining the UI 
+ui <- fluidPage(
+   
+   # The main title for the App
+   titlePanel("Data Visualisation"),
+   
+   # Sidebar layout with the input and output definitions 
+   sidebarLayout(
+      
+      # Sidebar panel for the inputs 
+      sidebarPanel(
+         
+         # Input:To  Select the plot type with radio buttons
+         #Created radiobutton for selecting the options  scatterplot,Histogram of x,Histogram           of y,Boxplot
+         radioButtons("type", "Plot type:",
+                      c("Scatter" = "scat",
+                        "Histogram of X"="Histogram of x",
+                        "Histogram of Y"="Histogram of y",
+                        "Boxplot" = "box")),
+         
+         # Input: Dropdown list for the variables to plot
+         selectInput('x', 'X', names(Assignment_2), names(Assignment_2)[[2]]),#selecting the input for x variable
+         selectInput('y', 'Y', names(Assignment_2), names(Assignment_2)[[1]]),#selecting the input for y variable
+         
+      ),
+      
+      # Main panel for displaying outputs
+      mainPanel(
+         
+         # Output: Tabset with plots and table 
+         #creating tab by name Plot all the plots will be generated in thsi tab
+         tabsetPanel(type = "tabs",
+                     tabPanel("Plot", plotOutput("plotxy")))
+      )
+   )
+)
+
+# Definining the server logic for app 
+server <- function(input, output) {
+   #Here the generation of plots process takes place and when ever one option is selected in      radiobuttion the output will be generated based on the selected option  
+   output$plotxy <- renderPlot({
+      
+      #if the scatterplot is  selected
+      if(input$type=="scat"){
+        #plotting thre scatterplot 
+         plot(Assignment_2[input$x][[1]],Assignment_2[input$y][[1]],
+              xlab = input$x, ylab=input$y,
+              main = paste("Scatterplot of", input$y, "vs", input$x),col="blue")
+      } 
+      #if the Histogram of x is selected
+      if(input$type=="Histogram of x"){
+         #plotting the histogram for x
+         hist(Assignment_2[input$x][[1]], 
+              xlab = input$x, 
+              main = paste("Histogram of", input$x),col="blue")
+      }
+      #if the Histogram of y is selected
+      #plotting the histogram for y
+      if(input$type=="Histogram of y"){
+         hist(Assignment_2[input$y][[1]], 
+              xlab = input$y, 
+              main = paste("Histogram of", input$y),col="red")
+      }
+      
+      # if boxplot is selected
+      if(input$type=="box"){
+         #plotting the boxplot
+         boxplot(
+            as.formula(
+               paste(Assignment_2[input$y]," ~ ",Assignment_2[input$x])),
+            xlab = input$x, ylab=input$y,
+            main = paste("Boxplot of", input$y, "vs", input$x),col="blue" )
+      }
+   })
+}
+
+#To generate the app
+shinyApp(ui, server)
+
+
+```
+
+### Question(3)
+3) You should include the ability to fit a linear regression model to the scatterplots generated in (2).  The chart should include the fitted line and a table with the slope and intercept should be present within the Shiny App or dashboard. 
+
+To generate shiny we should follow three steps. They are as follows
+1.Ui
+2.server
+3.shinyApp(UI, server)
+
+Ui
+Initially, we should create UI  function i.e user interface, Generally, the user interface consists of title panel, sidebar layout, sidebar panel, main panel.
+
+For this app, I gave the title as Regression ModelIn the sidebar panel, I defined radio buttons for a scatterplot, histogram of x, histogram of y, boxplot and dropdown list menu for the x and y variables.
+
+In the main panel, I defined tabsetpanel as plot in this tab all the plots output will appear in this tab and Intercept and slope tab the intercept and slope related to the x variable will appear here
+
+Server
+In server function, I created output$summary  the intercept and slope value of the model will be stored in this variable and 
+I created output$plotxy all the plot will store in that variable 
+if the input$type is equal to "scat" the scatterplot with the linear regression model line will be executed or plotted on plot tab
+if the input$type is equal to "Histogram of x" the Histogram for x variable will be generated on plot tab
+if the input$type is equal to "Histogram of y" the Histogram for y variable will be generated on plot tab
+if the input$type is equal to "box" the boxplot will be generated on the plot tab 
+
+
+shinyAPP(UI, server)
+we will call the UI and server functions by using shinyAPP() function and generate the App
+
+
+```{r,echo=FALSE}
+# Defining the UI 
+ui <- fluidPage(
+   # The main title for the App
+   titlePanel("Regression Model "),
+   # Sidebar layout with the input and output definitions 
+   sidebarLayout(
+      # Sidebar panel for the inputs 
+      sidebarPanel(
+         # Input:To  Select the plot type with radio buttons
+         #Created radiobutton for selecting the options  scatterplot,Histogram of x,Histogram of y,Boxplot
+         
+         radioButtons("type", "Plot type:",
+                      c("Scatter" = "scat",
+                        "Histogram of X"="Histogram of x",
+                        "Histogram of Y"="Histogram of y",
+                        "Boxplot" = "box")),
+         # Input: Dropdown list for the variables to plot
+         #selecting the input for x variable
+         selectInput("x", label = h3("x"),
+                     choices = names(Assignment_2), selected = 1),
+         #selecting the input for y variable
+         selectInput("y", label = h3("y"),
+                     choices = names(Assignment_2), selected = 1)
+         
+      ),
+      # Main panel for displaying outputs
+      
+      mainPanel(
+         # Output: Tabset with plots and table 
+         #creating tab by name Plot all the plots will be generated in this tab
+         tabsetPanel(type = "tabs",
+                     tabPanel("Plot", plotOutput("plotxy")),
+                     tabPanel("Intercept and slope", verbatimTextOutput("summary"))
+                     
+         )
+      )
+   ))
+
+# SERVER
+# Definining the server logic for app 
+
+server <- function(input, output) {
+   
+   # Intercept and slope output
+   output$summary <- renderPrint({
+      fit <- lm(Assignment_2[,input$x] ~ Assignment_2[,input$y])
+      names(fit$coefficients) <- c("Intercept", input$x)
+      print(fit)
+   })
+   
+#Here the generation of plots process takes place and when ever one option is selected in radiobuttion the output will be generated based on the selected option  
+   
+   output$plotxy <- renderPlot({
+      #if scatterplot selected
+      if(input$type=="scat"){
+         #plotting thre scatterplot 
+            plot(Assignment_2[,input$x],Assignment_2[,input$y],  main="Scatterplot",
+                 xlab=input$x, ylab=input$y, pch=19)
+            abline(lm( Assignment_2[,input$y]~Assignment_2[,input$x]), col="red")
+            lines(lowess(Assignment_2[,input$x],Assignment_2[,input$y]), col="blue")
+         }
+      #if the Histogram of x is selected
+      if(input$type=="Histogram of x"){
+         
+         #plotting the histogram for x
+         
+         hist(Assignment_2[input$x][[1]], 
+              xlab = input$x, 
+              main = paste("Histogram of", input$x),col="blue")
+      }
+      #if the Histogram of y is selected
+      
+      if(input$type=="Histogram of y"){
+         #plotting the histogram for y
+         
+         hist(Assignment_2[input$y][[1]], 
+              xlab = input$y, 
+              main = paste("Histogram of", input$y),col="red")
+      }
+      
+      # if boxplot is selected
+      if(input$type=="box"){
+         # eplotting the boxplot
+         boxplot(
+            as.formula(
+               paste(Assignment_2[input$y]," ~ ",Assignment_2[input$x])),
+            xlab = input$x, ylab=input$y,
+            main = paste("Boxplot of", input$y, "vs", input$x),col="blue" )
+      }
+   })
+}
+#To generate the app
+
+shinyApp(ui = ui, server = server)
+
+```
+
+### Question(4)
+4)Using Monte Carlo simulations, you should attempt to predict the temperature in subsequent years.  This should be done using at least two different models (i.e. different collections of variables in part 1).  You should clearly state which performs best. 
+
+In a simulation, we set the ground rules of a random process and then the computer uses random numbers to generate an outcome that adheres to those rules
+
+Monte Carlo simulations are used to model the probability of different outcomes in a process that cannot easily be predicted due to the intervention of random variables. It is a technique used to understand the impact of risk and uncertainty in prediction and forecasting models.
+
+In this, I considered two best  linear regression models which I did in question 1 and I found the mean absolute deviation for both the models and then I found model coefficients .later I found the stimulation for the model
+And then plotted the histograms for actual variables and stimulated values and both the histograms are nearly equal
+
+For model one:
+I used the linear regression model TEMP~year+month+hour+day+pm2.5+DEWP
+I found the mean mean absolute deviation (mad) for the model TEMP~year+month+hour+day+pm2.5+DEWP and storing in disp variable
+And the model coefficients for the model TEMP~year+month+hour+day+pm2.5+DEWP and stored in the model
+considering Ysim variable and assigned NULL to it and performing the Monte Carlo simulation by running the loop 500 times 
+After that generating the histograms for actual value i.e Assignment_2$TEMP and hist(ysim)
+And checking both are simulated distributed and nearly the same.
+
+For model two:
+I used the linear regression model TEMP~year+month+hour+day+pm2.5+PRES
+I found the mean mean absolute deviation (mad) for the model TEMP~year+month+hour+day+pm2.5+PRESand storing in disp1 variable
+And the model coefficients for the model TEMP~year+month+hour+day+pm2.5+PRESDEWP and stored in  model1
+considering Ysim1 variable and assigned NULL to it and performing the Monte Carlo simulation by running the loop 500 times 
+After that generating the histograms for actual value i.e Assignment_2$TEMP and hist(ysim1)
+And checking both are simulated distribution and nearly the same.
+
+Among both the models TEMP~year+month+hour+day+pm2.5+DEWP i.e first model is best and its performance is good, while plotting histograms of actual and stimulated values both the histograms are distribution was stimulated and nearly both are equal.This is the reson why the first model performance is good
+
+```{r,echo=FALSE}
+
+#corrplot is used for the graphical display of a correlation matrix, confidence interval or general matrix
+corrplot(cor(Assignment_2))#corrplot for Assignment_2 dataframe
+
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+
+#For Model1
+
+#histogram of TEMP column of Assignment_2 dataframe
+hist(Assignment_2$TEMP, breaks = 10)
+
+#finding mean absolute deviation (mad) for the model TEMP~year+month+hour+day+pm2.5+DEWP and storing in disp variable
+disp=mad(summary(lm(TEMP~year+month+hour+day+pm2.5+DEWP , data = Assignment_2))$resid)
+
+disp#printing disp value
+
+#model coefficients for the model EMP~year+month+hour+day+pm2.5+DEWP and stored in  model
+
+model=(summary(lm(TEMP~year+month+hour+day+pm2.5+DEWP, data = Assignment_2))$coef)
+
+model#printing the model
+
+#considering Ysim variable and assigned NULL to it
+ysim=NULL
+#performing the monte carlo stimulation
+for(i in 1:500){
+   ysim=cbind(ysim ,model[1] +
+                 model[2]*mean(Assignment_2$year) +
+                 model[3]*mean(Assignment_2$month) +  
+                 model[4]*mean(Assignment_2$hour) + 
+                 model[5]*mean(Assignment_2$day)+
+                 model[6]*mean(Assignment_2$pm2.5)+
+                 model[7]*mean(Assignment_2$DEWP) +runif(1,-4*disp,6*disp) ) 
+   
+}
+
+hist(ysim)#histogram of stimulated variable i.e ysim
+
+abline(v=mean(Assignment_2$TEMP),col="red")#drawing the abline by using the mean of temp column of Assignment_2
+
+
+#For Model2
+#model2
+
+#histogram of TEMP column of Assignment_2 dataframe
+
+hist(Assignment_2$TEMP, breaks = 10)
+
+#finding mean absolute deviation (mad) for the model TEMP~year+month+hour+day+pm2.5+PRES and storing in disp1 variable
+disp1=mad(summary(lm(TEMP~year+month+hour+day+pm2.5+PRES , data = Assignment_2))$resid)
+
+disp1#printing disp1 value
+
+#model coefficients for the model EMP~year+month+hour+day+pm2.5+PRES and stored in model1
+
+model1=(summary(lm(TEMP~year+month+hour+day+pm2.5+PRES, data = Assignment_2))$coef)
+
+model1#printing the model1 value
+
+#considering Ysim1 variable and assigned NULL to it
+
+ysim1=NULL
+#performing the monte carlo stimulation
+
+for(i in 1:500){
+   ysim1=cbind(ysim1 ,model1[1] +
+                 model1[2]*mean(Assignment_2$year) +
+                 model1[3]*mean(Assignment_2$month) +  
+                 model1[4]*mean(Assignment_2$hour) + 
+                 model1[5]*mean(Assignment_2$day)+
+                 model1[6]*mean(Assignment_2$pm2.5)+
+                 model1[7]*mean(Assignment_2$PRES) +runif(1,-5*disp,8*disp) ) 
+   
+}
+
+hist(ysim1)#histogram of stimulated variable i.e ysim1
+
+#drawing the abline by using the mean of temp column of Assignment_2
+
+abline(v=mean(Assignment_2$TEMP),col="red")
+
+
+```
+
+###Question(5)
+
+
+5)We now consider two linear models: one where we consider y as temperature and x as pressure and a second with y as temperature and both pressure and wind speed as x variables.  You should apply both models and calculate the ESS statistics on the data (some notes on this statistic can be found here: https://www.graphpad.com/guides/prism/7/curvefitting/reg_howtheftestworks.htm?toc=0&printWindow ). You are required to generate a distribution for this test statistic by simulation; you may assume the errors and residuals are normal.  You should clearly state whether this model is an appropriate fit to the data based on your simulations
+
+
+Initially, I consider Assignment_2$TEMP as TEMP, Assignment¬_2$PRES as PRES
+And Assignment_2$Iws as Iws
+ I created model coefficient  i.e TEMP~PRES and assigned it to model1
+And then the mean absolute deviation (mad) for the model TEMP~PRES and storing in disp variable
+Now I created a model coefficient for TEMP~PRES+Iws and assigned it to model2
+And then the mean absolute deviation (mad) for the model TEMP~PRES+Iws and storing in disp 1 variable
+Now find the sum of the square value for model1 and model2
+The degree of freedom is defined as the number of data points minus the number of parameters
+So for model 1, there are two parameters so the degree of freedom is nrow(Assignment_2)-2
+For model2 there are three parameters so a degree of freedom is nrow(Assignment_2)-3
+The formula for the extra sum of squares of f_test is
+F=((ss1-ss2)/ss2)/((df1-df2)/df2)
+The F value for the models 0.2776
+The value of F is less than 1 so the simple model is correct
+And then I considered an empty vector and assigning it to variable a
+And considering rsss1,rsss2,ysim1,ysim2 and assigning NULL to them and applying the stimulation for both model 1 and model2 and calculating inside the loop for 500 times and plotting the histograms. The simple model is correct to fit for the data based on the stimulation
+
+```{r,echo=FALSE}
+#Assigning the Assignment_2$TEMP to TEMP
+
+TEMP<-Assignment_2$TEMP
+
+#Assigning the Assignment_2$PRES to PRES
+
+PRES<-Assignment_2$PRES
+
+#Assigning the Assignment_2$Iws to Iws
+
+Iws<-Assignment_2$Iws
+
+#creating a model coefficient for TEMP~PRES and assigining it to model1
+model1=summary(lm(TEMP~PRES))$coef
+model1#printing the model1
+
+#finding mean absolute deviation (mad) for the model TEMP~PRES and storing in disp variable
+
+disp=mad((summary(lm(TEMP~PRES))$resi))
+disp#printing disp value
+
+
+#creating a model coefficient for TEMP~PRES+Iws and assigining it to model2
+
+model2=summary(lm(TEMP~PRES+Iws))$coef
+model2#printing the model2
+#finding mean absolute deviation (mad) for the model TEMP~PRES+Iws and storing in disp1 variable
+disp1=mad((summary(lm(TEMP~PRES+Iws))$resi))
+disp1#printing disp1
+
+#finding the sum of square for model1
+ss1=sum((lm(TEMP~PRES)$resi)^2)
+#finding the sum of square for model2
+
+ss2=sum((lm(TEMP~PRES+Iws)$resi)^2)
+#degree of freedom for model1,degree of freedom is defined as  the number of data points minus the number of parameters 
+#so in model1 number of parameters are 2 
+df1<-nrow(Assignment_2)-2
+df1#printing df1 value
+
+#degree of freedom for model2,degree of freedom is defined as  the number of data points minus the number of parameters 
+#so in model2 number of parameters are 3 
+df2<-nrow(Assignment_2)-3
+df2#printing df2 value
+#Formula for the extra sum of squares of f_test
+F=((ss1-ss2)/ss2)/((df1-df2)/df2)#finding the F value
+F#printing the F value
+
+#set up MC simulation
+#considering rsss1,rsss2,ysim1,ysim2 and assining NULL to them
+rsss1=NULL
+ysim1=NULL
+rsss2=NULL
+ysim2=NULL
+
+#considering a  empty vector and assigning it to variable a
+a <- c()
+
+#Doing the stimulation
+for(i in 1:500){#simulate dataset 500 times, calcuate rss on each dataset
+   ysim1=model1[1]+model1[2]*PRES+rnorm(length(PRES),0,disp)#stimulation for model1
+   rsss1=sum((lm(ysim1~PRES)$resi)^2)#sum of square for model1
+   
+   ysim2=model2[1]+model2[2]*PRES+model2[3]*Iws+rnorm(length(PRES+Iws),0,disp1)#stimulation for model2
+   rsss2=cbind(rsss2,sum((lm(ysim2~PRES+Iws)$resi)^2))#sum of square for model2
+   
+   df1<-nrow(Assignment_2)-2#degree of freedom for model1
+   df2<-nrow(Assignment_2)-3#degree of freedom for model2
+   F=((rsss1-rsss2)/rsss2)/((df1-df2)/df2)#calculating f value
+   a[i]<-F#assigining f value to a vector
+   
+}
+cat(a)#printing out the vetcor a value
+#generating histograms for ysim2 and rsss2
+hist(rsss2)
+hist(ysim2)
+
+```
+
+
+
+
+
+
+
+
